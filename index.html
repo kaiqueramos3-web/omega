@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLIX TV - Todos Veem Online</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    
+    <style>
+        :root {
+            --primary: #e50914;
+            --dark: #141414;
+            --light: #ffffff;
+            --gray: #808080;
+            --card-bg: #181818;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .loading-screen.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #333;
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+            padding: 20px 30px;
+            position: fixed;
+            width: 100%;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            color: var(--primary);
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 8px 15px;
+            width: 250px;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            color: white;
+            width: 100%;
+            padding: 5px 10px;
+            outline: none;
+        }
+
+        .search-box i {
+            color: var(--gray);
+        }
+
+        /* Main Content */
+        main {
+            padding-top: 80px;
+        }
+
+        .hero {
+            height: 60vh;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), 
+                        url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            margin-bottom: 40px;
+        }
+
+        .hero-content h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .hero-content p {
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin-bottom: 25px;
+            color: var(--gray);
+        }
+
+        .watch-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* Categories */
+        .section {
+            padding: 0 30px 40px;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .movie-card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+
+        .movie-card:hover {
+            transform: scale(1.05);
+        }
+
+        .movie-card img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        .movie-info {
+            padding: 15px;
+        }
+
+        .movie-info h3 {
+            margin-bottom: 5px;
+            font-size: 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .movie-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--gray);
+            font-size: 0.85rem;
+        }
+
+        /* Admin Button */
+        .admin-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: var(--primary);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(229, 9, 20, 0.5);
+            z-index: 1000;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.95);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 15px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid #444;
+            border-radius: 5px;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-right: 10px;
+            margin-top: 5px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #666;
+            color: white;
+        }
+
+        /* Player */
+        .player {
+            width: 100%;
+            max-width: 800px;
+            background: black;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .player video {
+            width: 100%;
+            height: auto;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #444;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                padding: 15px;
+            }
+            
+            .search-box {
+                width: 200px;
+            }
+            
+            .hero {
+                height: 50vh;
+                padding: 0 20px;
+            }
+            
+            .hero-content h1 {
+                font-size: 2rem;
+            }
+            
+            .movies-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="spinner"></div>
+        <h2>FLIX TV</h2>
+        <p>Conectando ao servidor...</p>
+    </div>
+
+    <!-- Main Site (hidden during loading) -->
+    <div id="mainSite" style="display: none;">
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <i class="fas fa-film"></i>
+                FLIX TV
+            </div>
+            
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Buscar...">
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Hero -->
+            <section class="hero">
+                <div class="hero-content">
+                    <h1>Filmes e Séries Online</h1>
+                    <p id="heroText">Carregando...</p>
+                    <button class="watch-btn" onclick="playRandom()">
+                        <i class="fas fa-play"></i> Assistir Agora
+                    </button>
+                </div>
+            </section>
+
+            <!-- Movies -->
+            <section class="section">
+                <h2><i class="fas fa-film"></i> Filmes</h2>
+                <div class="movies-grid" id="moviesGrid">
+                    <!-- Movies will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Series -->
+            <section class="section">
+                <h2><i class="fas fa-tv"></i> Séries</h2>
+                <div class="movies-grid" id="seriesGrid">
+                    <!-- Series will be loaded here -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Admin Button -->
+        <button class="admin-btn" onclick="openAdminModal()">
+            <i class="fas fa-plus"></i>
+        </button>
+
+        <!-- Admin Modal -->
+        <div class="modal" id="adminModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-cogs"></i> Painel Admin</h2>
+                    <button class="close-btn" onclick="closeAdminModal()">&times;</button>
+                </div>
+                
+                <!-- Password Section -->
+                <div id="passwordSection">
+                    <div class="form-group">
+                        <label>Senha de Administração:</label>
+                        <input type="password" id="adminPassword" class="form-control" placeholder="Digite a senha">
+                    </div>
+                    <button class="btn btn-primary" onclick="checkAdminPassword()">Entrar</button>
+                </div>
+                
+                <!-- Admin Panel -->
+                <div id="adminPanel" style="display: none;">
+                    <h3>Adicionar Conteúdo</h3>
+                    <p>Funcionalidade admin disponível!</p>
+                    <p><small>Você já está conectado ao Firebase. Qualquer conteúdo que adicionar será visto por todos.</small></p>
+                    <button class="btn btn-secondary" onclick="logoutAdmin()">Sair</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Modal -->
+        <div class="modal" id="playerModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="playerTitle">Assistindo</h2>
+                    <button class="close-btn" onclick="closePlayer()">&times;</button>
+                </div>
+                
+                <div class="player">
+                    <video id="videoPlayer" controls autoplay>
+                        Seu navegador não suporta vídeo HTML5.
+                    </video>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ CONFIGURAÇÃO FIXA DO FIREBASE ============
+        // COLE SUA CONFIGURAÇÃO AQUI! (a mesma do seu Firebase)
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyCPRy1yn16PSnWiloCEWpDgEk6rCjEggT0",
+            authDomain: "flixtv-a221b.firebaseapp.com",
+            projectId: "flixtv-a221b",
+            storageBucket: "flixtv-a221b.firebasestorage.app",
+            messagingSenderId: "757648212001",
+            appId: "1:757648212001:web:84281ffd158821c8d9a360",
+            measurementId: "G-WNF0JB5W6W"
+        };
+
+        const ADMIN_PASSWORD = "566"; // Senha do admin
+        let db = null;
+        let storage = null;
+        let isAdmin = false;
+        let movies = [];
+        let series = [];
+
+        // ============ INICIALIZAÇÃO ============
+        
+        async function initializeApp() {
+            try {
+                // 1. Inicializar Firebase
+                firebase.initializeApp(FIREBASE_CONFIG);
+                db = firebase.firestore();
+                storage = firebase.storage();
+                
+                // 2. Atualizar texto de carregamento
+                document.querySelector('.loading-screen p').textContent = 'Carregando conteúdos...';
+                
+                // 3. Carregar dados
+                await loadContent();
+                
+                // 4. Mostrar site
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('mainSite').style.display = 'block';
+                
+                // 5. Atualizar status
+                updateHeroText();
+                
+                // 6. Configurar busca
+                setupSearch();
+                
+                // 7. Configurar listeners em tempo real
+                setupRealtimeListeners();
+                
+                console.log('✅ Site inicializado com sucesso!');
+                
+            } catch (error) {
+                console.error('❌ Erro ao inicializar:', error);
+                document.querySelector('.loading-screen p').textContent = 'Erro ao conectar. Recarregue a página.';
+                
+                // Mostrar conteúdo de exemplo após 3 segundos se falhar
+                setTimeout(() => {
+                    showExampleContent();
+                }, 3000);
+            }
+        }
+        
+        async function loadContent() {
+            try {
+                // Carregar filmes
+                const moviesSnapshot = await db.collection('movies').get();
+                movies = [];
+                moviesSnapshot.forEach(doc => {
+                    movies.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Carregar séries
+                const seriesSnapshot = await db.collection('series').get();
+                series = [];
+                seriesSnapshot.forEach(doc => {
+                    series.push({ id: doc.id, ...doc.data() });
+                });
+                
+                renderMovies();
+                renderSeries();
+                
+            } catch (error) {
+                console.error('Erro ao carregar conteúdo:', error);
+                throw error;
+            }
+        }
+        
+        function setupRealtimeListeners() {
+            if (!db) return;
+            
+            // Listener para filmes
+            db.collection('movies').onSnapshot(snapshot => {
+                movies = [];
+                snapshot.forEach(doc => {
+                    movies.push({ id: doc.id, ...doc.data() });
+                });
+                renderMovies();
+                updateHeroText();
+            });
+            
+            // Listener para séries
+            db.collection('series').onSnapshot(snapshot => {
+                series = [];
+                snapshot.forEach(doc => {
+                    series.push({ id: doc.id, ...doc.data() });
+                });
+                renderSeries();
+                updateHeroText();
+            });
+        }
+        
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', function(e) {
+                const term = e.target.value.toLowerCase().trim();
+                
+                if (term === '') {
+                    document.querySelectorAll('.movie-card').forEach(card => {
+                        card.style.display = 'block';
+                    });
+                    return;
+                }
+                
+                document.querySelectorAll('.movie-card').forEach(card => {
+                    const title = card.querySelector('h3').textContent.toLowerCase();
+                    if (title.includes(term)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        function updateHeroText() {
+            const totalContent = movies.length + series.length;
+            document.getElementById('heroText').textContent = 
+                `${movies.length} filmes • ${series.length} séries • Todos veem em tempo real!`;
+        }
+        
+        // ============ RENDER FUNCTIONS ============
+        
+        function renderMovies() {
+            const container = document.getElementById('moviesGrid');
+            
+            if (movies.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <i class="fas fa-film"></i>
+                        <p>Nenhum filme disponível</p>
+                        <p style="font-size: 0.9rem; color: #444;">O admin ainda não adicionou filmes</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            movies.forEach(movie => {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.onclick = () => playMovie(movie);
+                
+                card.innerHTML = `
+                    <img src="${movie.banner}" alt="${movie.title}" 
+                         onerror="this.src='https://images.unsplash.com/photo-1535016120720-40c646be5580?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'">
+                    <div class="movie-info">
+                        <h3>${movie.title}</h3>
+                        <div class="movie-meta">
+                            <span>${movie.year}</span>
+                            <span>${movie.genre || 'Geral'}</span>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+        
+        function renderSeries() {
+            const container = document.getElementById('seriesGrid');
+            
+            if (series.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <i class="fas fa-tv"></i>
+                        <p>Nenhuma série disponível</p>
+                        <p style="font-size: 0.9rem; color: #444;">O admin ainda não adicionou séries</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            series.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.onclick = () => playSeries(s);
+                
+                card.innerHTML = `
+                    <img src="${s.banner}" alt="${s.title}" 
+                         onerror="this.src='https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'">
+                    <div class="movie-info">
+                        <h3>${s.title}</h3>
+                        <div class="movie-meta">
+                            <span>${s.year}</span>
+                            <span>${s.genre || 'Geral'}</span>
+                            <span>${s.episodes?.length || 0} episódios</span>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+        
+        // ============ PLAYER FUNCTIONS ============
+        
+        function playRandom() {
+            const allContent = [...movies, ...series];
+            if (allContent.length === 0) {
+                alert('Nenhum conteúdo disponível!');
+                return;
+            }
+            
+            const randomContent = allContent[Math.floor(Math.random() * allContent.length)];
+            
+            if (randomContent.type === 'movie') {
+                playMovie(randomContent);
+            } else {
+                playSeries(randomContent);
+            }
+        }
+        
+        function playMovie(movie) {
+            document.getElementById('playerTitle').textContent = movie.title;
+            document.getElementById('videoPlayer').src = movie.video;
+            document.getElementById('playerModal').classList.add('active');
+        }
+        
+        function playSeries(seriesItem) {
+            document.getElementById('playerTitle').textContent = seriesItem.title;
+            
+            if (seriesItem.episodes && seriesItem.episodes.length > 0) {
+                document.getElementById('videoPlayer').src = seriesItem.episodes[0].video;
+            } else {
+                document.getElementById('videoPlayer').src = '';
+            }
+            
+            document.getElementById('playerModal').classList.add('active');
+        }
+        
+        function closePlayer() {
+            document.getElementById('playerModal').classList.remove('active');
+            const videoPlayer = document.getElementById('videoPlayer');
+            videoPlayer.pause();
+            videoPlayer.src = '';
+        }
+        
+        // ============ ADMIN FUNCTIONS ============
+        
+        function openAdminModal() {
+            document.getElementById('adminModal').classList.add('active');
+        }
+        
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.remove('active');
+            isAdmin = false;
+            document.getElementById('passwordSection').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('adminPassword').value = '';
+        }
+        
+        function checkAdminPassword() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASSWORD) {
+                isAdmin = true;
+                document.getElementById('passwordSection').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+            } else {
+                alert('❌ Senha incorreta!');
+                document.getElementById('adminPassword').value = '';
+            }
+        }
+        
+        function logoutAdmin() {
+            closeAdminModal();
+        }
+        
+        // ============ FALLBACK CONTENT ============
+        
+        function showExampleContent() {
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('mainSite').style.display = 'block';
+            document.getElementById('heroText').textContent = 'Modo offline - Conteúdo de exemplo';
+            
+            // Exemplo de filmes
+            movies = [
+                {
+                    id: 1,
+                    title: 'Aventura Espacial',
+                    year: '2023',
+                    genre: 'Ficção Científica',
+                    banner: 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+                    video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                    type: 'movie'
+                }
+            ];
+            
+            // Exemplo de séries
+            series = [
+                {
+                    id: 2,
+                    title: 'Crônicas do Futuro',
+                    year: '2022',
+                    genre: 'Drama, Ficção',
+                    banner: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+                    episodes: [
+                        {
+                            number: 1,
+                            title: 'O Começo',
+                            video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4'
+                        }
+                    ],
+                    type: 'series'
+                }
+            ];
+            
+            renderMovies();
+            renderSeries();
+        }
+        
+        // ============ INICIAR TUDO ============
+        window.onload = initializeApp;
+    </script>
+</body>
+</html>
