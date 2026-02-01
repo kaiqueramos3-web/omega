@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FLIX TV - Todos Veem Online</title>
+    <title>FLIX TV - Sistema Completo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -30,7 +30,7 @@
             color: var(--light);
         }
 
-        /* Loading Screen */
+        /* Loading */
         .loading-screen {
             position: fixed;
             top: 0;
@@ -107,7 +107,7 @@
             color: var(--gray);
         }
 
-        /* Main Content */
+        /* Main */
         main {
             padding-top: 80px;
         }
@@ -170,6 +170,7 @@
             overflow: hidden;
             transition: transform 0.3s;
             cursor: pointer;
+            position: relative;
         }
 
         .movie-card:hover {
@@ -242,7 +243,7 @@
             padding: 25px;
             border-radius: 10px;
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -262,6 +263,36 @@
             color: white;
             font-size: 1.5rem;
             cursor: pointer;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: #333;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
         }
 
         /* Forms */
@@ -286,6 +317,15 @@
             font-size: 0.9rem;
         }
 
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
         .btn {
             padding: 10px 20px;
             border: none;
@@ -305,6 +345,87 @@
         .btn-secondary {
             background-color: #666;
             color: white;
+        }
+
+        .btn-danger {
+            background-color: #c0392b;
+            color: white;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+
+        /* Upload Options */
+        .upload-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .upload-option-btn {
+            flex: 1;
+            padding: 10px;
+            background: #333;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .upload-option-btn.active {
+            background: var(--primary);
+        }
+
+        .upload-area {
+            border: 2px dashed #666;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin: 15px 0;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+        }
+
+        .upload-area i {
+            font-size: 2rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        /* Manage Content */
+        .manage-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .manage-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        .manage-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 5px;
         }
 
         /* Player */
@@ -334,6 +455,25 @@
             color: #444;
         }
 
+        /* Episode List in Player */
+        .episode-list {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .episode-item {
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            margin-bottom: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .episode-item:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             header {
@@ -356,6 +496,10 @@
             .movies-grid {
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             }
+            
+            .modal-content {
+                padding: 20px;
+            }
         }
     </style>
 </head>
@@ -367,7 +511,7 @@
         <p>Conectando ao servidor...</p>
     </div>
 
-    <!-- Main Site (hidden during loading) -->
+    <!-- Main Site -->
     <div id="mainSite" style="display: none;">
         <!-- Header -->
         <header>
@@ -378,7 +522,7 @@
             
             <div class="search-box">
                 <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Buscar...">
+                <input type="text" id="searchInput" placeholder="Buscar filmes e séries...">
             </div>
         </header>
 
@@ -421,7 +565,7 @@
         <div class="modal" id="adminModal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2><i class="fas fa-cogs"></i> Painel Admin</h2>
+                    <h2><i class="fas fa-cogs"></i> Painel de Administração</h2>
                     <button class="close-btn" onclick="closeAdminModal()">&times;</button>
                 </div>
                 
@@ -429,17 +573,205 @@
                 <div id="passwordSection">
                     <div class="form-group">
                         <label>Senha de Administração:</label>
-                        <input type="password" id="adminPassword" class="form-control" placeholder="Digite a senha">
+                        <input type="password" id="adminPassword" class="form-control" placeholder="Digite a senha (566)">
                     </div>
                     <button class="btn btn-primary" onclick="checkAdminPassword()">Entrar</button>
                 </div>
                 
                 <!-- Admin Panel -->
                 <div id="adminPanel" style="display: none;">
-                    <h3>Adicionar Conteúdo</h3>
-                    <p>Funcionalidade admin disponível!</p>
-                    <p><small>Você já está conectado ao Firebase. Qualquer conteúdo que adicionar será visto por todos.</small></p>
-                    <button class="btn btn-secondary" onclick="logoutAdmin()">Sair</button>
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchTab('addTab')">Adicionar</button>
+                        <button class="tab-btn" onclick="switchTab('manageTab')">Gerenciar</button>
+                        <button class="tab-btn" onclick="logoutAdmin()">Sair</button>
+                    </div>
+                    
+                    <!-- Add Content Tab -->
+                    <div id="addTab" class="tab-content active">
+                        <div class="form-group">
+                            <label>Tipo de Conteúdo:</label>
+                            <select id="contentType" class="form-control" onchange="changeContentType()">
+                                <option value="movie">🎬 Filme</option>
+                                <option value="series">📺 Série</option>
+                                <option value="episode">▶️ Episódio</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Movie Form -->
+                        <form id="movieForm" onsubmit="addMovie(event)">
+                            <h3>Adicionar Filme</h3>
+                            
+                            <div class="form-group">
+                                <input type="text" id="movieTitle" class="form-control" placeholder="Título do filme" required>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <input type="text" id="movieYear" class="form-control" placeholder="Ano (2024)" value="2024">
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" id="movieGenre" class="form-control" placeholder="Gênero (Ação, Comédia)">
+                                </div>
+                            </div>
+                            
+                            <div class="upload-options">
+                                <button type="button" class="upload-option-btn active" onclick="switchUploadOption('banner', 'link')">
+                                    <i class="fas fa-link"></i> Link da Capa
+                                </button>
+                                <button type="button" class="upload-option-btn" onclick="switchUploadOption('banner', 'file')">
+                                    <i class="fas fa-upload"></i> Upload da Capa
+                                </button>
+                            </div>
+                            
+                            <div id="bannerLinkSection" class="form-group">
+                                <input type="url" id="movieBanner" class="form-control" placeholder="URL da imagem (https://...)">
+                            </div>
+                            
+                            <div id="bannerFileSection" class="form-group" style="display: none;">
+                                <div class="upload-area" onclick="document.getElementById('bannerFile').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Clique para selecionar imagem</p>
+                                    <small>Formatos: JPG, PNG</small>
+                                    <input type="file" id="bannerFile" accept="image/*" style="display: none;">
+                                </div>
+                            </div>
+                            
+                            <div class="upload-options">
+                                <button type="button" class="upload-option-btn active" onclick="switchUploadOption('video', 'link')">
+                                    <i class="fas fa-link"></i> Link do Vídeo
+                                </button>
+                                <button type="button" class="upload-option-btn" onclick="switchUploadOption('video', 'file')">
+                                    <i class="fas fa-upload"></i> Upload do Vídeo
+                                </button>
+                            </div>
+                            
+                            <div id="videoLinkSection" class="form-group">
+                                <input type="url" id="movieVideo" class="form-control" placeholder="URL do vídeo MP4 (https://...)" required>
+                            </div>
+                            
+                            <div id="videoFileSection" class="form-group" style="display: none;">
+                                <div class="upload-area" onclick="document.getElementById('videoFile').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Clique para selecionar vídeo</p>
+                                    <small>Formato: MP4</small>
+                                    <input type="file" id="videoFile" accept="video/mp4" style="display: none;">
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                <i class="fas fa-save"></i> Salvar Filme
+                            </button>
+                        </form>
+                        
+                        <!-- Series Form -->
+                        <form id="seriesForm" onsubmit="addSeries(event)" style="display: none;">
+                            <h3>Adicionar Série</h3>
+                            
+                            <div class="form-group">
+                                <input type="text" id="seriesTitle" class="form-control" placeholder="Título da série" required>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <input type="text" id="seriesYear" class="form-control" placeholder="Ano (2024)" value="2024">
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" id="seriesGenre" class="form-control" placeholder="Gênero (Drama, Suspense)">
+                                </div>
+                            </div>
+                            
+                            <div class="upload-options">
+                                <button type="button" class="upload-option-btn active" onclick="switchUploadOption('seriesBanner', 'link')">
+                                    <i class="fas fa-link"></i> Link da Capa
+                                </button>
+                                <button type="button" class="upload-option-btn" onclick="switchUploadOption('seriesBanner', 'file')">
+                                    <i class="fas fa-upload"></i> Upload da Capa
+                                </button>
+                            </div>
+                            
+                            <div id="seriesBannerLinkSection" class="form-group">
+                                <input type="url" id="seriesBanner" class="form-control" placeholder="URL da imagem (https://...)" required>
+                            </div>
+                            
+                            <div id="seriesBannerFileSection" class="form-group" style="display: none;">
+                                <div class="upload-area" onclick="document.getElementById('seriesBannerFile').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Clique para selecionar imagem</p>
+                                    <input type="file" id="seriesBannerFile" accept="image/*" style="display: none;">
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                <i class="fas fa-save"></i> Salvar Série
+                            </button>
+                        </form>
+                        
+                        <!-- Episode Form -->
+                        <form id="episodeForm" onsubmit="addEpisode(event)" style="display: none;">
+                            <h3>Adicionar Episódio</h3>
+                            
+                            <div class="form-group">
+                                <select id="selectSeries" class="form-control" required onchange="updateEpisodeNumber()">
+                                    <option value="">Selecione uma série</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <input type="number" id="episodeNumber" class="form-control" placeholder="Número do episódio" required min="1">
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" id="episodeTitle" class="form-control" placeholder="Título do episódio" required>
+                                </div>
+                            </div>
+                            
+                            <div class="upload-options">
+                                <button type="button" class="upload-option-btn active" onclick="switchUploadOption('episodeVideo', 'link')">
+                                    <i class="fas fa-link"></i> Link do Vídeo
+                                </button>
+                                <button type="button" class="upload-option-btn" onclick="switchUploadOption('episodeVideo', 'file')">
+                                    <i class="fas fa-upload"></i> Upload do Vídeo
+                                </button>
+                            </div>
+                            
+                            <div id="episodeVideoLinkSection" class="form-group">
+                                <input type="url" id="episodeVideo" class="form-control" placeholder="URL do vídeo MP4 (https://...)" required>
+                            </div>
+                            
+                            <div id="episodeVideoFileSection" class="form-group" style="display: none;">
+                                <div class="upload-area" onclick="document.getElementById('episodeVideoFile').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p>Clique para selecionar vídeo</p>
+                                    <small>Formato: MP4</small>
+                                    <input type="file" id="episodeVideoFile" accept="video/mp4" style="display: none;">
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                <i class="fas fa-save"></i> Salvar Episódio
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Manage Content Tab -->
+                    <div id="manageTab" class="tab-content">
+                        <h3>Gerenciar Conteúdo</h3>
+                        
+                        <div class="form-group">
+                            <input type="text" id="searchManage" class="form-control" placeholder="Buscar conteúdo..." 
+                                   oninput="filterManageContent(this.value)">
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <h4>Filmes</h4>
+                            <div id="moviesList" class="manage-list"></div>
+                        </div>
+                        
+                        <div>
+                            <h4>Séries</h4>
+                            <div id="seriesList" class="manage-list"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -453,17 +785,20 @@
                 </div>
                 
                 <div class="player">
-                    <video id="videoPlayer" controls autoplay>
-                        Seu navegador não suporta vídeo HTML5.
-                    </video>
+                    <video id="videoPlayer" controls autoplay></video>
+                </div>
+                
+                <div id="episodesList" style="display: none;">
+                    <h3>Episódios:</h3>
+                    <div id="episodesContainer" class="episode-list"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // ============ CONFIGURAÇÃO FIXA DO FIREBASE ============
-        // COLE SUA CONFIGURAÇÃO AQUI! (a mesma do seu Firebase)
+        // ============ CONFIGURAÇÃO FIREBASE ============
+        // COLE SUA CONFIGURAÇÃO AQUI!
         const FIREBASE_CONFIG = {
             apiKey: "AIzaSyCPRy1yn16PSnWiloCEWpDgEk6rCjEggT0",
             authDomain: "flixtv-a221b.firebaseapp.com",
@@ -474,51 +809,43 @@
             measurementId: "G-WNF0JB5W6W"
         };
 
-        const ADMIN_PASSWORD = "566"; // Senha do admin
+        const ADMIN_PASSWORD = "566";
         let db = null;
         let storage = null;
         let isAdmin = false;
         let movies = [];
         let series = [];
+        let currentUploadType = {
+            banner: 'link',
+            video: 'link',
+            seriesBanner: 'link',
+            episodeVideo: 'link'
+        };
 
         // ============ INICIALIZAÇÃO ============
         
         async function initializeApp() {
             try {
-                // 1. Inicializar Firebase
+                // Inicializar Firebase
                 firebase.initializeApp(FIREBASE_CONFIG);
                 db = firebase.firestore();
                 storage = firebase.storage();
                 
-                // 2. Atualizar texto de carregamento
-                document.querySelector('.loading-screen p').textContent = 'Carregando conteúdos...';
-                
-                // 3. Carregar dados
+                // Carregar dados
                 await loadContent();
                 
-                // 4. Mostrar site
+                // Mostrar site
                 document.getElementById('loadingScreen').classList.add('hidden');
                 document.getElementById('mainSite').style.display = 'block';
                 
-                // 5. Atualizar status
-                updateHeroText();
+                // Configurar site
+                setupSite();
                 
-                // 6. Configurar busca
-                setupSearch();
-                
-                // 7. Configurar listeners em tempo real
-                setupRealtimeListeners();
-                
-                console.log('✅ Site inicializado com sucesso!');
+                console.log('✅ Site carregado com sucesso!');
                 
             } catch (error) {
-                console.error('❌ Erro ao inicializar:', error);
+                console.error('❌ Erro:', error);
                 document.querySelector('.loading-screen p').textContent = 'Erro ao conectar. Recarregue a página.';
-                
-                // Mostrar conteúdo de exemplo após 3 segundos se falhar
-                setTimeout(() => {
-                    showExampleContent();
-                }, 3000);
             }
         }
         
@@ -540,9 +867,13 @@
                 
                 renderMovies();
                 renderSeries();
+                updateHeroText();
+                
+                // Configurar listeners em tempo real
+                setupRealtimeListeners();
                 
             } catch (error) {
-                console.error('Erro ao carregar conteúdo:', error);
+                console.error('Erro ao carregar:', error);
                 throw error;
             }
         }
@@ -558,6 +889,7 @@
                 });
                 renderMovies();
                 updateHeroText();
+                updateManageContent();
             });
             
             // Listener para séries
@@ -568,12 +900,13 @@
                 });
                 renderSeries();
                 updateHeroText();
+                updateManageContent();
             });
         }
         
-        function setupSearch() {
-            const searchInput = document.getElementById('searchInput');
-            searchInput.addEventListener('input', function(e) {
+        function setupSite() {
+            // Configurar busca
+            document.getElementById('searchInput').addEventListener('input', function(e) {
                 const term = e.target.value.toLowerCase().trim();
                 
                 if (term === '') {
@@ -585,7 +918,9 @@
                 
                 document.querySelectorAll('.movie-card').forEach(card => {
                     const title = card.querySelector('h3').textContent.toLowerCase();
-                    if (title.includes(term)) {
+                    const meta = card.querySelector('.movie-meta').textContent.toLowerCase();
+                    
+                    if (title.includes(term) || meta.includes(term)) {
                         card.style.display = 'block';
                     } else {
                         card.style.display = 'none';
@@ -595,9 +930,707 @@
         }
         
         function updateHeroText() {
-            const totalContent = movies.length + series.length;
             document.getElementById('heroText').textContent = 
                 `${movies.length} filmes • ${series.length} séries • Todos veem em tempo real!`;
+        }
+        
+        // ============ ADMIN FUNCTIONS ============
+        
+        function openAdminModal() {
+            document.getElementById('adminModal').classList.add('active');
+            resetForms();
+            showPasswordSection();
+        }
+        
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.remove('active');
+            isAdmin = false;
+        }
+        
+        function showPasswordSection() {
+            document.getElementById('passwordSection').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('adminPassword').value = '';
+        }
+        
+        function checkAdminPassword() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASSWORD) {
+                isAdmin = true;
+                document.getElementById('passwordSection').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                switchTab('addTab');
+                updateManageContent();
+            } else {
+                alert('❌ Senha incorreta!');
+                document.getElementById('adminPassword').value = '';
+            }
+        }
+        
+        function logoutAdmin() {
+            closeAdminModal();
+        }
+        
+        function switchTab(tabName) {
+            // Remover active de todas as tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Adicionar active à tab clicada
+            document.querySelector(`.tab-btn[onclick*="${tabName}"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            // Se for manageTab, atualizar
+            if (tabName === 'manageTab') {
+                updateManageContent();
+            }
+        }
+        
+        function changeContentType() {
+            const type = document.getElementById('contentType').value;
+            
+            // Esconder todos os formulários
+            document.getElementById('movieForm').style.display = 'none';
+            document.getElementById('seriesForm').style.display = 'none';
+            document.getElementById('episodeForm').style.display = 'none';
+            
+            // Mostrar o formulário correto
+            if (type === 'movie') {
+                document.getElementById('movieForm').style.display = 'block';
+                switchUploadOption('banner', currentUploadType.banner);
+                switchUploadOption('video', currentUploadType.video);
+            } else if (type === 'series') {
+                document.getElementById('seriesForm').style.display = 'block';
+                switchUploadOption('seriesBanner', currentUploadType.seriesBanner);
+            } else if (type === 'episode') {
+                document.getElementById('episodeForm').style.display = 'block';
+                populateSeriesSelect();
+                switchUploadOption('episodeVideo', currentUploadType.episodeVideo);
+            }
+        }
+        
+        function switchUploadOption(type, option) {
+            currentUploadType[type] = option;
+            
+            // Esconder todas as seções
+            const linkSection = document.getElementById(`${type}LinkSection`);
+            const fileSection = document.getElementById(`${type}FileSection`);
+            
+            if (linkSection) linkSection.style.display = 'none';
+            if (fileSection) fileSection.style.display = 'none';
+            
+            // Atualizar botões
+            const buttons = document.querySelectorAll(`.upload-option-btn[onclick*="${type}"]`);
+            buttons.forEach(btn => {
+                if (btn.textContent.includes(option === 'link' ? 'Link' : 'Upload')) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Mostrar a seção correta
+            if (option === 'link') {
+                if (linkSection) linkSection.style.display = 'block';
+            } else {
+                if (fileSection) fileSection.style.display = 'block';
+            }
+        }
+        
+        async function uploadFile(file, path) {
+            if (!storage) {
+                alert('❌ Firebase Storage não está disponível! Use a opção de link.');
+                throw new Error('Storage não disponível');
+            }
+            
+            try {
+                const storageRef = storage.ref();
+                const fileRef = storageRef.child(`${path}/${Date.now()}_${file.name}`);
+                const snapshot = await fileRef.put(file);
+                const downloadURL = await snapshot.ref.getDownloadURL();
+                return downloadURL;
+            } catch (error) {
+                console.error('Erro no upload:', error);
+                throw error;
+            }
+        }
+        
+        // ============ ADD CONTENT FUNCTIONS ============
+        
+        async function addMovie(e) {
+            e.preventDefault();
+            if (!isAdmin) return alert('❌ Acesso negado!');
+            
+            const title = document.getElementById('movieTitle').value.trim();
+            const year = document.getElementById('movieYear').value.trim() || '2024';
+            const genre = document.getElementById('movieGenre').value.trim() || 'Geral';
+            
+            if (!title) return alert('⚠️ Digite o título do filme!');
+            
+            // Obter banner
+            let bannerUrl = '';
+            if (currentUploadType.banner === 'link') {
+                bannerUrl = document.getElementById('movieBanner').value.trim();
+                if (!bannerUrl) return alert('⚠️ Digite a URL da capa!');
+            } else {
+                const bannerFile = document.getElementById('bannerFile').files[0];
+                if (!bannerFile) return alert('⚠️ Selecione uma imagem para a capa!');
+                
+                try {
+                    bannerUrl = await uploadFile(bannerFile, 'banners');
+                } catch (error) {
+                    return alert('❌ Erro ao fazer upload da capa! Use a opção de link.');
+                }
+            }
+            
+            // Obter vídeo
+            let videoUrl = '';
+            if (currentUploadType.video === 'link') {
+                videoUrl = document.getElementById('movieVideo').value.trim();
+                if (!videoUrl) return alert('⚠️ Digite a URL do vídeo!');
+            } else {
+                const videoFile = document.getElementById('videoFile').files[0];
+                if (!videoFile) return alert('⚠️ Selecione um arquivo de vídeo!');
+                
+                if (!videoFile.type.includes('mp4')) {
+                    return alert('❌ O arquivo deve ser MP4!');
+                }
+                
+                try {
+                    videoUrl = await uploadFile(videoFile, 'videos');
+                } catch (error) {
+                    return alert('❌ Erro ao fazer upload do vídeo! Use a opção de link.');
+                }
+            }
+            
+            const movie = {
+                title: title,
+                year: year,
+                genre: genre,
+                banner: bannerUrl,
+                video: videoUrl,
+                type: 'movie',
+                createdAt: new Date().toISOString()
+            };
+            
+            try {
+                await db.collection('movies').add(movie);
+                alert('✅ Filme adicionado com sucesso! Todos verão.');
+                e.target.reset();
+            } catch (error) {
+                alert('❌ Erro ao salvar: ' + error.message);
+            }
+        }
+        
+        async function addSeries(e) {
+            e.preventDefault();
+            if (!isAdmin) return alert('❌ Acesso negado!');
+            
+            const title = document.getElementById('seriesTitle').value.trim();
+            const year = document.getElementById('seriesYear').value.trim() || '2024';
+            const genre = document.getElementById('seriesGenre').value.trim() || 'Geral';
+            
+            if (!title) return alert('⚠️ Digite o título da série!');
+            
+            // Obter banner
+            let bannerUrl = '';
+            if (currentUploadType.seriesBanner === 'link') {
+                bannerUrl = document.getElementById('seriesBanner').value.trim();
+                if (!bannerUrl) return alert('⚠️ Digite a URL da capa!');
+            } else {
+                const bannerFile = document.getElementById('seriesBannerFile').files[0];
+                if (!bannerFile) return alert('⚠️ Selecione uma imagem para a capa!');
+                
+                try {
+                    bannerUrl = await uploadFile(bannerFile, 'banners');
+                } catch (error) {
+                    return alert('❌ Erro ao fazer upload da capa! Use a opção de link.');
+                }
+            }
+            
+            const seriesData = {
+                title: title,
+                year: year,
+                genre: genre,
+                banner: bannerUrl,
+                episodes: [],
+                type: 'series',
+                createdAt: new Date().toISOString()
+            };
+            
+            try {
+                await db.collection('series').add(seriesData);
+                alert('✅ Série adicionada com sucesso!');
+                e.target.reset();
+            } catch (error) {
+                alert('❌ Erro ao salvar: ' + error.message);
+            }
+        }
+        
+        async function addEpisode(e) {
+            e.preventDefault();
+            if (!isAdmin) return alert('❌ Acesso negado!');
+            
+            const seriesId = document.getElementById('selectSeries').value;
+            const episodeNumber = parseInt(document.getElementById('episodeNumber').value);
+            const episodeTitle = document.getElementById('episodeTitle').value.trim();
+            
+            if (!seriesId) return alert('⚠️ Selecione uma série!');
+            if (!episodeNumber || episodeNumber < 1) return alert('⚠️ Digite um número de episódio válido!');
+            if (!episodeTitle) return alert('⚠️ Digite o título do episódio!');
+            
+            // Obter vídeo
+            let videoUrl = '';
+            if (currentUploadType.episodeVideo === 'link') {
+                videoUrl = document.getElementById('episodeVideo').value.trim();
+                if (!videoUrl) return alert('⚠️ Digite a URL do vídeo!');
+            } else {
+                const videoFile = document.getElementById('episodeVideoFile').files[0];
+                if (!videoFile) return alert('⚠️ Selecione um arquivo de vídeo!');
+                
+                if (!videoFile.type.includes('mp4')) {
+                    return alert('❌ O arquivo deve ser MP4!');
+                }
+                
+                try {
+                    videoUrl = await uploadFile(videoFile, 'episodes');
+                } catch (error) {
+                    return alert('❌ Erro ao fazer upload do vídeo! Use a opção de link.');
+                }
+            }
+            
+            const episode = {
+                number: episodeNumber,
+                title: episodeTitle,
+                video: videoUrl
+            };
+            
+            try {
+                const seriesDoc = await db.collection('series').doc(seriesId).get();
+                if (!seriesDoc.exists) return alert('❌ Série não encontrada!');
+                
+                const seriesData = seriesDoc.data();
+                const episodes = seriesData.episodes || [];
+                
+                // Verificar se episódio já existe
+                const existingEpisode = episodes.find(ep => ep.number === episodeNumber);
+                if (existingEpisode) {
+                    if (!confirm(`⚠️ Episódio ${episodeNumber} já existe! Deseja substituir?`)) {
+                        return;
+                    }
+                    // Remover episódio existente
+                    const index = episodes.findIndex(ep => ep.number === episodeNumber);
+                    episodes.splice(index, 1);
+                }
+                
+                episodes.push(episode);
+                episodes.sort((a, b) => a.number - b.number);
+                
+                await db.collection('series').doc(seriesId).update({
+                    episodes: episodes,
+                    updatedAt: new Date().toISOString()
+                });
+                
+                alert(`✅ Episódio ${episodeNumber} salvo com sucesso!`);
+                e.target.reset();
+                updateEpisodeNumber();
+                
+            } catch (error) {
+                alert('❌ Erro ao salvar: ' + error.message);
+            }
+        }
+        
+        // ============ MANAGE CONTENT FUNCTIONS ============
+        
+        function updateManageContent() {
+            updateMoviesList();
+            updateSeriesList();
+        }
+        
+        function updateMoviesList() {
+            const container = document.getElementById('moviesList');
+            container.innerHTML = '';
+            
+            if (movies.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">Nenhum filme</p>';
+                return;
+            }
+            
+            movies.forEach(movie => {
+                const item = document.createElement('div');
+                item.className = 'manage-item';
+                item.innerHTML = `
+                    <div class="item-info">
+                        <strong>${movie.title}</strong>
+                        <div style="font-size: 0.8rem; color: #999;">
+                            ${movie.year} • ${movie.genre || 'Geral'}
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-small btn-secondary" onclick="editMovie('${movie.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-small btn-danger" onclick="deleteMovie('${movie.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        function updateSeriesList() {
+            const container = document.getElementById('seriesList');
+            container.innerHTML = '';
+            
+            if (series.length === 0) {
+                container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">Nenhuma série</p>';
+                return;
+            }
+            
+            series.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'manage-item';
+                item.innerHTML = `
+                    <div class="item-info">
+                        <strong>${s.title}</strong>
+                        <div style="font-size: 0.8rem; color: #999;">
+                            ${s.year} • ${s.genre || 'Geral'} • ${s.episodes?.length || 0} episódios
+                        </div>
+                        ${(s.episodes || []).map(ep => `
+                            <div style="margin-left: 15px; font-size: 0.8rem; color: #666; margin-top: 2px;">
+                                Ep ${ep.number}: ${ep.title}
+                                <button class="btn btn-small" onclick="editEpisode('${s.id}', ${ep.number})" style="padding: 2px 5px; margin-left: 5px;">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-small" onclick="deleteEpisode('${s.id}', ${ep.number})" style="padding: 2px 5px; margin-left: 2px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-small btn-secondary" onclick="editSeries('${s.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-small btn-danger" onclick="deleteSeries('${s.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        function filterManageContent(searchTerm) {
+            const term = searchTerm.toLowerCase();
+            
+            document.querySelectorAll('#moviesList .manage-item').forEach(item => {
+                const title = item.querySelector('.item-info strong').textContent.toLowerCase();
+                item.style.display = title.includes(term) ? 'flex' : 'none';
+            });
+            
+            document.querySelectorAll('#seriesList .manage-item').forEach(item => {
+                const title = item.querySelector('.item-info strong').textContent.toLowerCase();
+                item.style.display = title.includes(term) ? 'flex' : 'none';
+            });
+        }
+        
+        async function deleteMovie(id) {
+            if (!confirm('❌ Tem certeza que deseja excluir este filme?')) return;
+            
+            try {
+                await db.collection('movies').doc(id).delete();
+                alert('✅ Filme excluído!');
+            } catch (error) {
+                alert('❌ Erro ao excluir: ' + error.message);
+            }
+        }
+        
+        async function deleteSeries(id) {
+            if (!confirm('❌ Tem certeza? Todos os episódios também serão excluídos!')) return;
+            
+            try {
+                await db.collection('series').doc(id).delete();
+                alert('✅ Série excluída!');
+            } catch (error) {
+                alert('❌ Erro ao excluir: ' + error.message);
+            }
+        }
+        
+        async function deleteEpisode(seriesId, episodeNumber) {
+            if (!confirm(`❌ Excluir episódio ${episodeNumber}?`)) return;
+            
+            try {
+                const seriesDoc = await db.collection('series').doc(seriesId).get();
+                if (!seriesDoc.exists) return;
+                
+                const seriesData = seriesDoc.data();
+                const episodes = seriesData.episodes || [];
+                const filteredEpisodes = episodes.filter(ep => ep.number !== episodeNumber);
+                
+                await db.collection('series').doc(seriesId).update({
+                    episodes: filteredEpisodes
+                });
+                
+                alert('✅ Episódio excluído!');
+            } catch (error) {
+                alert('❌ Erro ao excluir: ' + error.message);
+            }
+        }
+        
+        // ============ EDIT FUNCTIONS ============
+        
+        function editMovie(id) {
+            const movie = movies.find(m => m.id === id);
+            if (!movie) return;
+            
+            // Preencher formulário
+            document.getElementById('movieTitle').value = movie.title;
+            document.getElementById('movieYear').value = movie.year;
+            document.getElementById('movieGenre').value = movie.genre || '';
+            document.getElementById('movieBanner').value = movie.banner;
+            document.getElementById('movieVideo').value = movie.video;
+            
+            // Mudar para aba de adicionar
+            switchTab('addTab');
+            document.getElementById('contentType').value = 'movie';
+            changeContentType();
+            
+            // Configurar botão para atualizar
+            const form = document.getElementById('movieForm');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Atualizar Filme';
+            submitBtn.onclick = async function(e) {
+                e.preventDefault();
+                await updateMovie(id);
+            };
+        }
+        
+        async function updateMovie(id) {
+            const title = document.getElementById('movieTitle').value.trim();
+            const year = document.getElementById('movieYear').value.trim() || '2024';
+            const genre = document.getElementById('movieGenre').value.trim() || 'Geral';
+            const banner = document.getElementById('movieBanner').value.trim();
+            const video = document.getElementById('movieVideo').value.trim();
+            
+            const updatedMovie = {
+                title: title,
+                year: year,
+                genre: genre,
+                banner: banner,
+                video: video,
+                updatedAt: new Date().toISOString()
+            };
+            
+            try {
+                await db.collection('movies').doc(id).update(updatedMovie);
+                alert('✅ Filme atualizado!');
+                resetMovieForm();
+            } catch (error) {
+                alert('❌ Erro ao atualizar: ' + error.message);
+            }
+        }
+        
+        function editSeries(id) {
+            const seriesItem = series.find(s => s.id === id);
+            if (!seriesItem) return;
+            
+            document.getElementById('seriesTitle').value = seriesItem.title;
+            document.getElementById('seriesYear').value = seriesItem.year;
+            document.getElementById('seriesGenre').value = seriesItem.genre || '';
+            document.getElementById('seriesBanner').value = seriesItem.banner;
+            
+            switchTab('addTab');
+            document.getElementById('contentType').value = 'series';
+            changeContentType();
+            
+            const form = document.getElementById('seriesForm');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Atualizar Série';
+            submitBtn.onclick = async function(e) {
+                e.preventDefault();
+                await updateSeries(id);
+            };
+        }
+        
+        async function updateSeries(id) {
+            const title = document.getElementById('seriesTitle').value.trim();
+            const year = document.getElementById('seriesYear').value.trim() || '2024';
+            const genre = document.getElementById('seriesGenre').value.trim() || 'Geral';
+            const banner = document.getElementById('seriesBanner').value.trim();
+            
+            const updatedSeries = {
+                title: title,
+                year: year,
+                genre: genre,
+                banner: banner,
+                updatedAt: new Date().toISOString()
+            };
+            
+            try {
+                await db.collection('series').doc(id).update(updatedSeries);
+                alert('✅ Série atualizada!');
+                resetSeriesForm();
+            } catch (error) {
+                alert('❌ Erro ao atualizar: ' + error.message);
+            }
+        }
+        
+        function editEpisode(seriesId, episodeNumber) {
+            const seriesItem = series.find(s => s.id === seriesId);
+            if (!seriesItem || !seriesItem.episodes) return;
+            
+            const episode = seriesItem.episodes.find(ep => ep.number === episodeNumber);
+            if (!episode) return;
+            
+            document.getElementById('selectSeries').value = seriesId;
+            document.getElementById('episodeNumber').value = episode.number;
+            document.getElementById('episodeTitle').value = episode.title;
+            document.getElementById('episodeVideo').value = episode.video;
+            
+            switchTab('addTab');
+            document.getElementById('contentType').value = 'episode';
+            changeContentType();
+            
+            const form = document.getElementById('episodeForm');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Atualizar Episódio';
+            submitBtn.onclick = async function(e) {
+                e.preventDefault();
+                await updateEpisode(seriesId, episodeNumber);
+            };
+        }
+        
+        async function updateEpisode(seriesId, oldEpisodeNumber) {
+            const newEpisodeNumber = parseInt(document.getElementById('episodeNumber').value);
+            const title = document.getElementById('episodeTitle').value.trim();
+            const video = document.getElementById('episodeVideo').value.trim();
+            
+            const updatedEpisode = {
+                number: newEpisodeNumber,
+                title: title,
+                video: video
+            };
+            
+            try {
+                const seriesDoc = await db.collection('series').doc(seriesId).get();
+                if (!seriesDoc.exists) return;
+                
+                const seriesData = seriesDoc.data();
+                let episodes = seriesData.episodes || [];
+                
+                // Remover episódio antigo
+                episodes = episodes.filter(ep => ep.number !== oldEpisodeNumber);
+                
+                // Adicionar episódio atualizado
+                episodes.push(updatedEpisode);
+                episodes.sort((a, b) => a.number - b.number);
+                
+                await db.collection('series').doc(seriesId).update({
+                    episodes: episodes,
+                    updatedAt: new Date().toISOString()
+                });
+                
+                alert('✅ Episódio atualizado!');
+                resetEpisodeForm();
+            } catch (error) {
+                alert('❌ Erro ao atualizar: ' + error.message);
+            }
+        }
+        
+        // ============ UTILITY FUNCTIONS ============
+        
+        function populateSeriesSelect() {
+            const select = document.getElementById('selectSeries');
+            select.innerHTML = '<option value="">Selecione uma série</option>';
+            
+            series.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s.id;
+                option.textContent = s.title;
+                select.appendChild(option);
+            });
+            
+            updateEpisodeNumber();
+        }
+        
+        function updateEpisodeNumber() {
+            const seriesId = document.getElementById('selectSeries').value;
+            const seriesItem = series.find(s => s.id === seriesId);
+            
+            if (seriesItem && seriesItem.episodes && seriesItem.episodes.length > 0) {
+                const maxEpisode = Math.max(...seriesItem.episodes.map(ep => ep.number));
+                document.getElementById('episodeNumber').value = maxEpisode + 1;
+            } else {
+                document.getElementById('episodeNumber').value = 1;
+            }
+        }
+        
+        function resetForms() {
+            document.getElementById('movieForm').reset();
+            document.getElementById('seriesForm').reset();
+            document.getElementById('episodeForm').reset();
+            
+            // Resetar botões de submit
+            const movieSubmitBtn = document.getElementById('movieForm').querySelector('button[type="submit"]');
+            movieSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Salvar Filme';
+            movieSubmitBtn.onclick = function(e) {
+                e.preventDefault();
+                addMovie(e);
+            };
+            
+            const seriesSubmitBtn = document.getElementById('seriesForm').querySelector('button[type="submit"]');
+            seriesSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Salvar Série';
+            seriesSubmitBtn.onclick = function(e) {
+                e.preventDefault();
+                addSeries(e);
+            };
+            
+            const episodeSubmitBtn = document.getElementById('episodeForm').querySelector('button[type="submit"]');
+            episodeSubmitBtn.innerHTML = '<i class="fas fa-save"></i> Salvar Episódio';
+            episodeSubmitBtn.onclick = function(e) {
+                e.preventDefault();
+                addEpisode(e);
+            };
+            
+            document.getElementById('contentType').value = 'movie';
+            changeContentType();
+        }
+        
+        function resetMovieForm() {
+            document.getElementById('movieForm').reset();
+            const submitBtn = document.getElementById('movieForm').querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Salvar Filme';
+            submitBtn.onclick = function(e) {
+                e.preventDefault();
+                addMovie(e);
+            };
+        }
+        
+        function resetSeriesForm() {
+            document.getElementById('seriesForm').reset();
+            const submitBtn = document.getElementById('seriesForm').querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Salvar Série';
+            submitBtn.onclick = function(e) {
+                e.preventDefault();
+                addSeries(e);
+            };
+        }
+        
+        function resetEpisodeForm() {
+            document.getElementById('episodeForm').reset();
+            const submitBtn = document.getElementById('episodeForm').querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> Salvar Episódio';
+            submitBtn.onclick = function(e) {
+                e.preventDefault();
+                addEpisode(e);
+            };
+            updateEpisodeNumber();
         }
         
         // ============ RENDER FUNCTIONS ============
@@ -698,6 +1731,7 @@
         function playMovie(movie) {
             document.getElementById('playerTitle').textContent = movie.title;
             document.getElementById('videoPlayer').src = movie.video;
+            document.getElementById('episodesList').style.display = 'none';
             document.getElementById('playerModal').classList.add('active');
         }
         
@@ -706,11 +1740,36 @@
             
             if (seriesItem.episodes && seriesItem.episodes.length > 0) {
                 document.getElementById('videoPlayer').src = seriesItem.episodes[0].video;
+                showEpisodes(seriesItem);
             } else {
                 document.getElementById('videoPlayer').src = '';
+                document.getElementById('episodesList').style.display = 'none';
             }
             
             document.getElementById('playerModal').classList.add('active');
+        }
+        
+        function showEpisodes(seriesItem) {
+            const container = document.getElementById('episodesContainer');
+            container.innerHTML = '';
+            
+            if (seriesItem.episodes) {
+                seriesItem.episodes.forEach(ep => {
+                    const div = document.createElement('div');
+                    div.className = 'episode-item';
+                    div.innerHTML = `
+                        <div>
+                            <strong>Episódio ${ep.number}: ${ep.title}</strong>
+                        </div>
+                    `;
+                    div.onclick = () => {
+                        document.getElementById('videoPlayer').src = ep.video;
+                    };
+                    container.appendChild(div);
+                });
+            }
+            
+            document.getElementById('episodesList').style.display = 'block';
         }
         
         function closePlayer() {
@@ -720,80 +1779,7 @@
             videoPlayer.src = '';
         }
         
-        // ============ ADMIN FUNCTIONS ============
-        
-        function openAdminModal() {
-            document.getElementById('adminModal').classList.add('active');
-        }
-        
-        function closeAdminModal() {
-            document.getElementById('adminModal').classList.remove('active');
-            isAdmin = false;
-            document.getElementById('passwordSection').style.display = 'block';
-            document.getElementById('adminPanel').style.display = 'none';
-            document.getElementById('adminPassword').value = '';
-        }
-        
-        function checkAdminPassword() {
-            const password = document.getElementById('adminPassword').value;
-            if (password === ADMIN_PASSWORD) {
-                isAdmin = true;
-                document.getElementById('passwordSection').style.display = 'none';
-                document.getElementById('adminPanel').style.display = 'block';
-            } else {
-                alert('❌ Senha incorreta!');
-                document.getElementById('adminPassword').value = '';
-            }
-        }
-        
-        function logoutAdmin() {
-            closeAdminModal();
-        }
-        
-        // ============ FALLBACK CONTENT ============
-        
-        function showExampleContent() {
-            document.getElementById('loadingScreen').classList.add('hidden');
-            document.getElementById('mainSite').style.display = 'block';
-            document.getElementById('heroText').textContent = 'Modo offline - Conteúdo de exemplo';
-            
-            // Exemplo de filmes
-            movies = [
-                {
-                    id: 1,
-                    title: 'Aventura Espacial',
-                    year: '2023',
-                    genre: 'Ficção Científica',
-                    banner: 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-                    video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-                    type: 'movie'
-                }
-            ];
-            
-            // Exemplo de séries
-            series = [
-                {
-                    id: 2,
-                    title: 'Crônicas do Futuro',
-                    year: '2022',
-                    genre: 'Drama, Ficção',
-                    banner: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
-                    episodes: [
-                        {
-                            number: 1,
-                            title: 'O Começo',
-                            video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4'
-                        }
-                    ],
-                    type: 'series'
-                }
-            ];
-            
-            renderMovies();
-            renderSeries();
-        }
-        
-        // ============ INICIAR TUDO ============
+        // ============ INICIAR ============
         window.onload = initializeApp;
     </script>
 </body>
